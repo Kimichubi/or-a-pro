@@ -1,0 +1,16 @@
+# Backend
+backend/.env
+backend/bin/
+backend/uploads/
+
+# Deploy
+.env.prod
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Misc
+*.log
+*.tsbuildinfo
+.DS_Store
