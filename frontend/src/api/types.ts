@@ -5,6 +5,15 @@ export interface User {
   createdAt: string
 }
 
+export interface BillingStatus {
+  plan: 'free' | 'professional'
+  subscriptionStatus: string
+  quotesUsed: number
+  quotesLimit: number | null
+  canManage: boolean
+  billingEnabled: boolean
+}
+
 export interface AdminOverview {
   accounts: number
   businesses: number
@@ -129,6 +138,23 @@ export interface QuoteDetail extends Quote {
   business: Business
   items: QuoteItem[]
   reminders: Reminder[]
+}
+
+export interface PublicQuoteDetail {
+  title: string
+  discountAmount: number
+  executionDays: number
+  validityDays: number
+  notes: string
+  paymentConditions: string
+  subtotal: number
+  total: number
+  createdAt: string
+  sentAt: string | null
+  canRespond: boolean
+  customer: Pick<Customer, 'name'>
+  business: Pick<Business, 'name' | 'logoUrl' | 'phone' | 'email' | 'primaryColor' | 'secondaryColor' | 'termsConditions'>
+  items: Pick<QuoteItem, 'name' | 'description' | 'unit' | 'quantity' | 'unitPrice' | 'total'>[]
 }
 
 export interface Reminder {

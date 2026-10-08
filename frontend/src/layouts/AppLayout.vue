@@ -14,6 +14,7 @@ const nav = [
   { name: 'customers', label: 'Clientes', to: '/app/clientes', icon: 'M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2 M9 11a4 4 0 100-8 4 4 0 000 8z M22 21v-2a4 4 0 00-3-3.87 M15 3.13a4 4 0 010 7.75' },
   { name: 'catalog', label: 'Serviços e materiais', to: '/app/catalogo', icon: 'M4 4h16v16H4z M4 9h16 M9 4v16' },
   { name: 'business', label: 'Meu negócio', to: '/app/negocio', icon: 'M3 21h18 M5 21V7l7-4 7 4v14 M9 21v-6h6v6' },
+  { name: 'billing', label: 'Assinatura', to: '/app/assinatura', icon: 'M3 7h18v10H3z M3 10h18 M7 14h3' },
 ]
 const visibleNav = computed(() => auth.isAdmin
   ? [...nav, { name: 'admin', label: 'Administração', to: '/app/admin', icon: 'M12 3v18 M3 12h18 M5.6 5.6l12.8 12.8 M18.4 5.6L5.6 18.4' }]

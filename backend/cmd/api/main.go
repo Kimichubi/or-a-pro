@@ -7,6 +7,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"github.com/kimichubi/orcapro-back/internal/auth"
+	"github.com/kimichubi/orcapro-back/internal/billing"
 	"github.com/kimichubi/orcapro-back/internal/config"
 	"github.com/kimichubi/orcapro-back/internal/httpapi"
 	"github.com/kimichubi/orcapro-back/internal/httpapi/handlers"
@@ -57,6 +58,14 @@ func main() {
 	)
 	hand.Admin = store.NewAdminStore(pool)
 	hand.AdminEmail = cfg.AdminEmail
+	hand.BillingStore = store.NewBillingStore(pool)
+	hand.Stripe = billing.NewService(
+		cfg.StripeSecretKey,
+		cfg.StripeWebhookSecret,
+		cfg.PublicBaseURL,
+		cfg.StripePriceProfessional,
+		hand.BillingStore,
+	)
 
 	server := httpapi.New(cfg.CORSOrigin, hand, jwt, cfg.UploadDir)
 	log.Printf("orcapro-api listening on :%s", cfg.Port)

@@ -62,10 +62,15 @@ Valores que **precisam** ser alterados:
 | `ADMIN_EMAIL`      | e-mail exato da conta que terá acesso ao backoffice   |
 | `SMTP_HOST` / `SMTP_PORT` | servidor SMTP com STARTTLS, normalmente porta `587` |
 | `SMTP_FROM`        | endereço remetente autorizado pelo provedor          |
+| `STRIPE_SECRET_KEY` | chave privada; use `sk_test_...` antes de produção   |
+| `STRIPE_WEBHOOK_SECRET` | segredo do endpoint webhook (`whsec_...`)       |
+| `STRIPE_PRICE_PROFESSIONAL` | ID do preço mensal do Profissional em BRL    |
 
 Configure também `SMTP_USERNAME` e `SMTP_PASSWORD` quando o provedor exigir autenticação. O backend recusa iniciar em produção sem `SMTP_HOST` e `SMTP_FROM`, pois sem eles a recuperação de senha não poderia ser enviada.
 
 Gere os segredos localmente com `openssl rand -hex 32` para `POSTGRES_PASSWORD` e `openssl rand -hex 64` para `JWT_SECRET`. O formato hexadecimal evita caracteres reservados na URL de conexão do PostgreSQL usada pelo Compose.
+
+No painel da Stripe, crie o preço mensal Profissional em BRL e configure o webhook `https://SEU_DOMINIO/api/billing/webhook` para `customer.subscription.created`, `customer.subscription.updated` e `customer.subscription.deleted`, na versão de API `2026-09-30.endive`. Copie o `whsec_...` para `STRIPE_WEBHOOK_SECRET` e habilite o Customer Portal para atualização de cartão e cancelamento. Faça primeiro a configuração com chaves e preços de teste; nunca coloque a chave privada Stripe no frontend. O plano Empresa ainda não está disponível para contratação nem inicia Checkout.
 
 O arquivo `.env.prod` **não deve ser versionado**. Adicione ao `.gitignore`:
 

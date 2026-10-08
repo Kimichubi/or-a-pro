@@ -20,6 +20,7 @@ const router = createRouter({
       children: [
         { path: '', name: 'dashboard', component: () => import('../views/DashboardView.vue') },
         { path: 'negocio', name: 'business', component: () => import('../views/BusinessView.vue') },
+        { path: 'assinatura', name: 'billing', component: () => import('../views/BillingView.vue') },
         { path: 'clientes', name: 'customers', component: () => import('../views/CustomersView.vue') },
         { path: 'catalogo', name: 'catalog', component: () => import('../views/CatalogView.vue') },
         { path: 'orcamentos', name: 'quotes', component: () => import('../views/QuotesView.vue') },

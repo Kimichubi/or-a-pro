@@ -96,8 +96,13 @@ npm run lint && npm run build
 | `SMTP_PASSWORD`   | Senha SMTP                                              |
 | `SMTP_FROM`       | Endereço remetente; obrigatório em produção             |
 | `ADMIN_EMAIL`     | E-mail autorizado a acessar o backoffice                |
+| `STRIPE_SECRET_KEY` | Chave privada da Stripe (`sk_test_...` em testes)       |
+| `STRIPE_WEBHOOK_SECRET` | Segredo de assinatura do webhook (`whsec_...`)     |
+| `STRIPE_PRICE_PROFESSIONAL` | Price ID mensal do Profissional (`price_...`)  |
 
 Em produção, configure o SMTP para habilitar a recuperação de senha. O refresh token fica em cookie `HttpOnly`, `SameSite=Lax` e `Secure`; o access token existe apenas em memória no navegador.
+
+Para Stripe Billing, crie o preço mensal Profissional em BRL no painel da Stripe, configure os IDs e registre `https://SEU_DOMINIO/api/billing/webhook` para os eventos `customer.subscription.created`, `customer.subscription.updated` e `customer.subscription.deleted`, na versão de API `2026-09-30.endive`. Habilite também o Customer Portal para atualização do cartão e cancelamento. O backend ativa o plano apenas para assinaturas `active` ou `trialing`; o plano gratuito limita a criação a 5 orçamentos por mês. O plano Empresa ainda não está disponível para contratação.
 
 ## Resumo da API
 

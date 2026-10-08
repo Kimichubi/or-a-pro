@@ -74,6 +74,39 @@ func (s *QuoteStore) Create(ctx context.Context, p CreateQuoteParams) (*QuoteDet
 	}
 	defer tx.Rollback(ctx)
 
+	var plan string
+	var userID uuid.UUID
+	err = tx.QueryRow(ctx, `
+		SELECT u.plan, b.user_id
+		FROM users u
+		JOIN businesses b ON b.user_id = u.id
+		WHERE b.id = $1
+		FOR UPDATE OF u`, p.BusinessID).Scan(&plan, &userID)
+	if err != nil {
+		return nil, fmt.Errorf("load plan for quote: %w", err)
+	}
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO monthly_quote_usage (user_id, month_start, quotes_created)
+		VALUES ($1, date_trunc('month', now())::date, 0)
+		ON CONFLICT (user_id, month_start) DO NOTHING`, userID); err != nil {
+		return nil, fmt.Errorf("initialize monthly quote usage: %w", err)
+	}
+	var quotesThisMonth int64
+	if err := tx.QueryRow(ctx, `
+		SELECT quotes_created FROM monthly_quote_usage
+		WHERE user_id = $1 AND month_start = date_trunc('month', now())::date
+		FOR UPDATE`, userID).Scan(&quotesThisMonth); err != nil {
+		return nil, fmt.Errorf("load monthly quote usage: %w", err)
+	}
+	if plan == "free" && quotesThisMonth >= FreeQuoteLimit {
+		return nil, ErrFreePlanLimit
+	}
+	if _, err := tx.Exec(ctx, `
+		UPDATE monthly_quote_usage SET quotes_created = quotes_created + 1
+		WHERE user_id = $1 AND month_start = date_trunc('month', now())::date`, userID); err != nil {
+		return nil, fmt.Errorf("increment monthly quote usage: %w", err)
+	}
+
 	slug, err := newSlug()
 	if err != nil {
 		return nil, fmt.Errorf("generate slug: %w", err)
@@ -355,7 +388,7 @@ func (s *QuoteStore) SetStatus(ctx context.Context, businessID, id uuid.UUID, st
 func (s *QuoteStore) MarkSent(ctx context.Context, businessID, id uuid.UUID) error {
 	_, err := s.pool.Exec(ctx, `
 		UPDATE quotes SET status = 'sent', sent_at = now(), updated_at = now()
-		WHERE business_id = $1 AND id = $2 AND status = 'draft'`, businessID, id)
+		WHERE business_id = $1 AND id = $2 AND status IN ('draft', 'viewed') AND sent_at IS NULL`, businessID, id)
 	if err != nil {
 		return fmt.Errorf("mark sent: %w", err)
 	}
@@ -365,8 +398,8 @@ func (s *QuoteStore) MarkSent(ctx context.Context, businessID, id uuid.UUID) err
 func (s *QuoteStore) MarkViewed(ctx context.Context, slug string) error {
 	_, err := s.pool.Exec(ctx, `
 		UPDATE quotes SET viewed_at = COALESCE(viewed_at, now()),
-		                  status = CASE WHEN status = 'draft' THEN 'viewed' ELSE status END
-		WHERE slug = $1`, slug)
+		                  status = 'viewed'
+		WHERE slug = $1 AND status IN ('sent', 'viewed')`, slug)
 	if err != nil {
 		return fmt.Errorf("mark viewed: %w", err)
 	}
@@ -374,31 +407,44 @@ func (s *QuoteStore) MarkViewed(ctx context.Context, slug string) error {
 }
 
 func (s *QuoteStore) ClientDecision(ctx context.Context, slug string, approved bool, comment string) error {
-	var q domain.Quote
-	err := s.pool.QueryRow(ctx, `
-		SELECT id, business_id, status FROM quotes WHERE slug = $1`, slug).
-		Scan(&q.ID, &q.BusinessID, &q.Status)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return ErrNotFound
-	}
+	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("get quote for decision: %w", err)
+		return fmt.Errorf("begin client decision: %w", err)
 	}
-	if q.Status == domain.QuoteStatusApproved || q.Status == domain.QuoteStatusDeclined {
-		return ErrAlreadyDecided
-	}
-
+	defer tx.Rollback(ctx)
+	var status domain.QuoteStatus
 	if approved {
-		_, err = s.pool.Exec(ctx, `
-			UPDATE quotes SET status = 'approved', approved_at = now(), declined_at = NULL, client_comment = $2, updated_at = now()
-			WHERE id = $1`, q.ID, comment)
+		err = tx.QueryRow(ctx, `
+			UPDATE quotes SET status = 'approved', approved_at = now(), declined_at = NULL,
+			                  client_comment = $2, updated_at = now()
+			WHERE slug = $1 AND status IN ('sent', 'viewed')
+			  AND sent_at IS NOT NULL AND now() < sent_at + validity_days * interval '1 day'
+			RETURNING status`, slug, comment).Scan(&status)
 	} else {
-		_, err = s.pool.Exec(ctx, `
-			UPDATE quotes SET status = 'declined', declined_at = now(), approved_at = NULL, client_comment = $2, updated_at = now()
-			WHERE id = $1`, q.ID, comment)
+		err = tx.QueryRow(ctx, `
+			UPDATE quotes SET status = 'declined', declined_at = now(), approved_at = NULL,
+			                  client_comment = $2, updated_at = now()
+			WHERE slug = $1 AND status IN ('sent', 'viewed')
+			  AND sent_at IS NOT NULL AND now() < sent_at + validity_days * interval '1 day'
+			RETURNING status`, slug, comment).Scan(&status)
+	}
+	if errors.Is(err, pgx.ErrNoRows) {
+		var currentStatus domain.QuoteStatus
+		if err := tx.QueryRow(ctx, `SELECT status FROM quotes WHERE slug = $1`, slug).Scan(&currentStatus); errors.Is(err, pgx.ErrNoRows) {
+			return ErrNotFound
+		} else if err != nil {
+			return fmt.Errorf("check quote after client decision: %w", err)
+		}
+		if currentStatus == domain.QuoteStatusApproved || currentStatus == domain.QuoteStatusDeclined {
+			return ErrAlreadyDecided
+		}
+		return ErrDecisionNotOpen
 	}
 	if err != nil {
 		return fmt.Errorf("client decision: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit client decision: %w", err)
 	}
 	return nil
 }

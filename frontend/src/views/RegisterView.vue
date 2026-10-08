@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useRouter, RouterLink } from 'vue-router'
+import { useRoute, useRouter, RouterLink } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import AppLogo from '../components/AppLogo.vue'
 import BaseInput from '../components/ui/BaseInput.vue'
@@ -8,6 +8,7 @@ import BaseButton from '../components/ui/BaseButton.vue'
 
 const auth = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 
 const name = ref('')
 const email = ref('')
@@ -31,7 +32,11 @@ async function submit() {
   }
   const ok = await auth.register(name.value, email.value, password.value)
   if (ok) {
-    router.push('/app')
+    if (route.query.plan === 'professional') {
+      router.push({ name: 'billing', query: { checkout: 'professional' } })
+    } else {
+      router.push('/app')
+    }
   } else {
     error.value = auth.error
   }
@@ -56,7 +61,7 @@ async function submit() {
       </div>
       <p class="mt-4 text-center text-sm text-gray-500">
         Já tem conta?
-        <RouterLink to="/login" class="font-medium text-blue-600 hover:underline">Entrar</RouterLink>
+        <RouterLink :to="{ name: 'login', query: { plan: route.query.plan } }" class="font-medium text-blue-600 hover:underline">Entrar</RouterLink>
       </p>
     </div>
   </div>

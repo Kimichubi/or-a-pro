@@ -22,7 +22,11 @@ async function submit() {
   }
   const ok = await auth.login(email.value, password.value)
   if (ok) {
-    router.push((route.query.redirect as string) || '/app')
+    if (route.query.plan === 'professional') {
+      router.push({ name: 'billing', query: { checkout: 'professional' } })
+    } else {
+      router.push((route.query.redirect as string) || '/app')
+    }
   } else {
     error.value = auth.error
   }

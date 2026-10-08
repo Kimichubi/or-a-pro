@@ -62,7 +62,8 @@ func (h *Handlers) ListQuotes(c *fiber.Ctx) error {
 }
 
 func (h *Handlers) CreateQuote(c *fiber.Ctx) error {
-	business, err := h.getBusiness(c, middleware.UserID(c))
+	userID := middleware.UserID(c)
+	business, err := h.getBusiness(c, userID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load business"})
 	}
@@ -88,6 +89,9 @@ func (h *Handlers) CreateQuote(c *fiber.Ctx) error {
 	}
 	if len(req.Items) > 100 {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "a quote can contain at most 100 items"})
+	}
+	if err := h.requireCatalogFeature(c, req.Items); err != nil {
+		return err
 	}
 	if !validMoneyAmount(req.DiscountAmount) {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "discount must be a valid amount with at most 10 digits before cents"})
@@ -140,6 +144,12 @@ func (h *Handlers) CreateQuote(c *fiber.Ctx) error {
 		Items:             items,
 	})
 	if err != nil {
+		if errors.Is(err, store.ErrFreePlanLimit) {
+			return c.Status(fiber.StatusPaymentRequired).JSON(fiber.Map{
+				"code":  "free_plan_limit",
+				"error": "Seu plano gratuito permite até 5 orçamentos por mês. Assine o Profissional para continuar.",
+			})
+		}
 		log.Printf("create quote: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create quote"})
 	}
@@ -217,6 +227,9 @@ func (h *Handlers) UpdateQuote(c *fiber.Ctx) error {
 	if len(req.Items) > 0 {
 		if len(req.Items) > 100 {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "a quote can contain at most 100 items"})
+		}
+		if err := h.requireCatalogFeature(c, req.Items); err != nil {
+			return err
 		}
 		items, subtotal, err := buildItems(req.Items)
 		if err != nil {
@@ -500,6 +513,25 @@ func (h *Handlers) validateCatalogReferences(c *fiber.Ctx, businessID uuid.UUID,
 		if _, err := h.Catalog.GetByID(c.Context(), businessID, id); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (h *Handlers) requireCatalogFeature(c *fiber.Ctx, items []quoteItemRequest) error {
+	for _, item := range items {
+		if item.CatalogItemID == nil || strings.TrimSpace(*item.CatalogItemID) == "" {
+			continue
+		}
+		account, err := h.BillingStore.GetByUserID(c.Context(), middleware.UserID(c))
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "não foi possível verificar o plano"})
+		}
+		if account.Plan != "professional" {
+			return c.Status(fiber.StatusPaymentRequired).JSON(fiber.Map{
+				"code": "professional_plan_required", "error": "o catálogo exige o plano Profissional",
+			})
+		}
+		return nil
 	}
 	return nil
 }

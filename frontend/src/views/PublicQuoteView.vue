@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { getPublicQuote, approveQuote, declineQuote } from '../api/quotes'
 import { errorMessage } from '../api/client'
-import type { QuoteDetail } from '../api/types'
+import type { PublicQuoteDetail } from '../api/types'
 import { formatMoney, formatDate } from '../utils/format'
 import BaseButton from '../components/ui/BaseButton.vue'
 import BaseTextarea from '../components/ui/BaseTextarea.vue'
@@ -11,7 +11,7 @@ import BaseTextarea from '../components/ui/BaseTextarea.vue'
 const route = useRoute()
 const slug = route.params.slug as string
 
-const quote = ref<QuoteDetail | null>(null)
+const quote = ref<PublicQuoteDetail | null>(null)
 const loading = ref(true)
 const error = ref('')
 const deciding = ref(false)
@@ -78,7 +78,7 @@ onMounted(load)
             <div>
               <p class="text-xs uppercase text-gray-400">Orçamento</p>
               <h2 class="text-xl font-bold text-gray-900">{{ quote.title }}</h2>
-              <p class="text-sm text-gray-500">Emitido em {{ formatDate(quote.createdAt) }} · Válido por {{ quote.validityDays }} dia(s)</p>
+              <p class="text-sm text-gray-500">Enviado em {{ formatDate(quote.sentAt || quote.createdAt) }} · Válido por {{ quote.validityDays }} dia(s)</p>
             </div>
             <div class="text-right">
               <p class="text-xs text-gray-400">Cliente</p>
@@ -96,7 +96,7 @@ onMounted(load)
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in quote.items" :key="item.id" class="border-b border-gray-100">
+              <tr v-for="(item, index) in quote.items" :key="index" class="border-b border-gray-100">
                 <td class="py-2">
                   <span class="font-medium text-gray-800">{{ item.name }}</span>
                   <p v-if="item.description" class="text-xs text-gray-500">{{ item.description }}</p>
@@ -137,6 +137,10 @@ onMounted(load)
               <h2 class="text-xl font-bold text-gray-900">Orçamento recusado</h2>
               <p class="mt-1 text-gray-500">Recebemos sua resposta. Se quiser, fale conosco para ajustar o orçamento.</p>
             </div>
+          </template>
+          <template v-else-if="!quote.canRespond">
+            <h2 class="font-semibold text-gray-900">Este orçamento não está disponível para resposta.</h2>
+            <p class="mt-1 text-sm text-gray-500">Ele pode ainda não ter sido enviado ou o prazo para resposta terminou.</p>
           </template>
           <template v-else>
             <h2 class="font-semibold text-gray-900">Deseja aprovar este orçamento?</h2>

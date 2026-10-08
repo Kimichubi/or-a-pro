@@ -19,7 +19,8 @@ type Server struct {
 
 func New(corsOrigin string, hand *handlers.Handlers, jwt *auth.JWTManager, uploadDir string) *Server {
 	app := fiber.New(fiber.Config{
-		AppName: "orcapro-api",
+		AppName:   "orcapro-api",
+		BodyLimit: 3 << 20,
 	})
 
 	app.Use(recover.New())
@@ -46,6 +47,7 @@ func (s *Server) routes() {
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "ok"})
 	})
+	app.Post("/api/billing/webhook", h.StripeWebhook)
 
 	authGroup := app.Group("/api/auth")
 	authGroup.Post("/register", h.Register)
@@ -57,11 +59,16 @@ func (s *Server) routes() {
 	authGroup.Get("/me", requireAuth, h.Me)
 	authGroup.Patch("/me", requireAuth, h.UpdateMe)
 
+	billing := app.Group("/api/billing", requireAuth)
+	billing.Get("/status", h.BillingStatus)
+	billing.Post("/checkout", h.BillingCheckout)
+	billing.Post("/portal", h.BillingPortal)
+
 	business := app.Group("/api/business", requireAuth)
 	business.Get("/", h.GetBusiness)
 	business.Put("/", h.UpdateBusiness)
-	business.Post("/logo", h.UploadLogo)
-	business.Post("/logo/dataurl", h.UploadFromDataURL)
+	business.Post("/logo", middleware.Professional(h.BillingStore), h.UploadLogo)
+	business.Post("/logo/dataurl", middleware.Professional(h.BillingStore), h.UploadFromDataURL)
 
 	customers := app.Group("/api/customers", requireAuth)
 	customers.Get("/", h.ListCustomers)
@@ -70,7 +77,7 @@ func (s *Server) routes() {
 	customers.Put("/:id", h.UpdateCustomer)
 	customers.Delete("/:id", h.DeleteCustomer)
 
-	catalog := app.Group("/api/catalog", requireAuth)
+	catalog := app.Group("/api/catalog", requireAuth, middleware.Professional(h.BillingStore))
 	catalog.Get("/", h.ListCatalog)
 	catalog.Post("/", h.CreateCatalogItem)
 	catalog.Put("/:id", h.UpdateCatalogItem)
@@ -86,7 +93,7 @@ func (s *Server) routes() {
 	quotes.Post("/:id/status", h.SetQuoteStatus)
 	quotes.Post("/:id/send", h.SendQuote)
 	quotes.Get("/:id/pdf", h.GetQuotePDF)
-	quotes.Post("/:id/reminders", h.CreateReminder)
+	quotes.Post("/:id/reminders", middleware.Professional(h.BillingStore), h.CreateReminder)
 
 	app.Get("/api/dashboard", requireAuth, h.GetDashboard)
 

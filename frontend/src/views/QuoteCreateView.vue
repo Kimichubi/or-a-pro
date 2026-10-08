@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { listCustomers } from '../api/customers'
 import { listCatalog } from '../api/catalog'
 import { createQuote, getQuote, updateQuote, type QuotePayload } from '../api/quotes'
@@ -223,7 +223,12 @@ onMounted(load)
             </div>
           </div>
 
-          <div v-if="error" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{{ error }}</div>
+          <div v-if="error" class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+            {{ error }}
+            <RouterLink v-if="error.includes('plano gratuito')" to="/app/assinatura" class="ml-1 font-semibold underline">
+              Ver planos
+            </RouterLink>
+          </div>
 
           <div class="flex gap-2">
             <BaseButton variant="outline" @click="router.back()">Cancelar</BaseButton>

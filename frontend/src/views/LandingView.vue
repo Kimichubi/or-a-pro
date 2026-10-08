@@ -2,8 +2,10 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import AppLogo from '../components/AppLogo.vue'
+import { useAuthStore } from '../stores/auth'
 
 const faqOpen = ref<number | null>(0)
+const auth = useAuthStore()
 
 const benefits = [
   {
@@ -86,6 +88,7 @@ const plans = [
     period: '/mês',
     features: ['Orçamentos ilimitados', 'Logo e cores da marca', 'Lembretes e follow-up', 'Catálogo de serviços'],
     cta: 'Assinar Profissional',
+    plan: 'professional',
     featured: true,
   },
   {
@@ -93,7 +96,7 @@ const plans = [
     price: 'R$ 79',
     period: '/mês',
     features: ['Múltiplos usuários', 'Personalização avançada', 'Suporte prioritário', 'Relatórios completos'],
-    cta: 'Falar com vendas',
+    cta: 'Disponível em breve',
     featured: false,
   },
 ]
@@ -270,12 +273,20 @@ const faqs = [
               </li>
             </ul>
             <RouterLink
-              to="/register"
+              v-if="p.name !== 'Empresa'"
+              :to="p.plan
+                ? (auth.isAuthenticated
+                  ? { name: 'billing', query: { checkout: p.plan } }
+                  : { name: 'register', query: { plan: p.plan } })
+                : '/register'"
               class="mt-6 block rounded-lg px-4 py-2 text-center text-sm font-medium"
               :class="p.featured ? 'bg-blue-600 text-white hover:bg-blue-700' : 'border border-gray-300 text-gray-700 hover:bg-gray-50'"
             >
               {{ p.cta }}
             </RouterLink>
+            <span v-else class="mt-6 block rounded-lg border border-gray-300 px-4 py-2 text-center text-sm font-medium text-gray-500">
+              {{ p.cta }}
+            </span>
           </div>
         </div>
       </div>

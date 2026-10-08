@@ -2,6 +2,7 @@ import client from './client'
 import type {
   AwaitingQuote,
   QuoteDetail,
+  PublicQuoteDetail,
   QuoteItemInput,
   QuoteStatus,
   QuoteSummary,
@@ -65,7 +66,7 @@ export function quotePdfUrl(id: string): string {
   return `/api/quotes/${id}/pdf`
 }
 
-export async function getPublicQuote(slug: string): Promise<QuoteDetail> {
+export async function getPublicQuote(slug: string): Promise<PublicQuoteDetail> {
   const res = await client.get(`/public/quotes/${slug}`)
   return res.data
 }

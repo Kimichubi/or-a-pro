@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"log"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -46,6 +47,33 @@ func (h *Handlers) UpdateBusiness(c *fiber.Ctx) error {
 	var req updateBusinessRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
+	}
+	containsProfessionalValues :=
+		(req.LogoURL != nil && strings.TrimSpace(*req.LogoURL) != "") ||
+			(req.PrimaryColor != nil && *req.PrimaryColor != "#2563EB") ||
+			(req.SecondaryColor != nil && *req.SecondaryColor != "#F97316") ||
+			(req.TermsConditions != nil && strings.TrimSpace(*req.TermsConditions) != "")
+	if containsProfessionalValues {
+		current, err := h.Business.GetByUserID(c.Context(), userID)
+		if err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "não foi possível carregar o negócio"})
+		}
+		requestsNewProfessionalFeature :=
+			(req.LogoURL != nil && strings.TrimSpace(*req.LogoURL) != "" && *req.LogoURL != current.LogoURL) ||
+				(req.PrimaryColor != nil && *req.PrimaryColor != "#2563EB" && *req.PrimaryColor != current.PrimaryColor) ||
+				(req.SecondaryColor != nil && *req.SecondaryColor != "#F97316" && *req.SecondaryColor != current.SecondaryColor) ||
+				(req.TermsConditions != nil && strings.TrimSpace(*req.TermsConditions) != "" && *req.TermsConditions != current.TermsConditions)
+		if requestsNewProfessionalFeature {
+			account, err := h.BillingStore.GetByUserID(c.Context(), userID)
+			if err != nil {
+				return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "não foi possível verificar o plano"})
+			}
+			if account.Plan != "professional" {
+				return c.Status(fiber.StatusPaymentRequired).JSON(fiber.Map{
+					"code": "professional_plan_required", "error": "logo, cores personalizadas e termos exigem o plano Profissional",
+				})
+			}
+		}
 	}
 
 	b, err := h.Business.Update(c.Context(), userID, store.UpdateBusinessParams{

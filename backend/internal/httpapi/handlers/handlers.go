@@ -7,6 +7,7 @@ import (
 	"github.com/redis/go-redis/v9"
 
 	"github.com/kimichubi/orcapro-back/internal/auth"
+	"github.com/kimichubi/orcapro-back/internal/billing"
 	"github.com/kimichubi/orcapro-back/internal/mailer"
 	"github.com/kimichubi/orcapro-back/internal/store"
 )
@@ -21,6 +22,8 @@ type Handlers struct {
 	Reminders     *store.ReminderStore
 	Dashboard     *store.DashboardStore
 	Admin         *store.AdminStore
+	BillingStore  *store.BillingStore
+	Stripe        *billing.Service
 	AdminEmail    string
 	JWT           *auth.JWTManager
 	Refresh       *auth.RefreshStore
