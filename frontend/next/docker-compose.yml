@@ -1,0 +1,8 @@
+services:
+  web:
+    build: .
+    env_file:
+      - .env.runtime
+    ports:
+      - "5177:3000"
+    restart: unless-stopped
