@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { LayoutDashboard, FileText, Users, Boxes, Building2, CreditCard, Shield, LogOut } from 'lucide-react'
+import { Brand } from '@/components/Brand'
 import { createSupabaseBrowserClient } from '@/lib/supabase/client'
 
 const links = [
@@ -14,36 +15,80 @@ const links = [
   { href: '/app/assinatura', label: 'Assinatura', icon: CreditCard },
 ]
 
+function initials(value: string) {
+  return value.trim().split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'OP'
+}
+
 export function AppShell({ children, name, isAdmin }: { children: React.ReactNode; name: string; isAdmin: boolean }) {
   const pathname = usePathname()
   const router = useRouter()
+  const displayName = name || 'Sua conta'
 
   async function signOut() {
-    try { await (await createSupabaseBrowserClient()).auth.signOut() } finally {
+    try {
+      await (await createSupabaseBrowserClient()).auth.signOut()
+    } finally {
       router.replace('/login')
       router.refresh()
     }
   }
 
+  function renderLink(href: string, label: string, Icon: typeof LayoutDashboard) {
+    const active = href === '/app' ? pathname === href : pathname.startsWith(href)
+    return (
+      <Link
+        key={href}
+        href={href}
+        className="app-nav-link"
+        data-active={active}
+        aria-current={active ? 'page' : undefined}
+      >
+        <Icon size={18} aria-hidden="true" />
+        <span>{label}</span>
+      </Link>
+    )
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50 lg:grid lg:grid-cols-[250px_1fr]">
-      <aside className="border-b border-gray-200 bg-white px-4 py-4 lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r lg:px-5 lg:py-7">
-        <div className="flex items-center justify-between lg:block">
-          <Link href="/app" className="font-display text-xl font-bold tracking-tight text-blue-800">OrçaPro</Link>
-          <p className="hidden truncate pt-1 text-xs text-gray-500 lg:block">{name || 'Sua conta'}</p>
-        </div>
-        <nav className="mt-4 flex gap-1 overflow-x-auto lg:mt-8 lg:flex-col">
-          {links.map(({ href, label, icon: Icon }) => {
-            const active = href === '/app' ? pathname === href : pathname.startsWith(href)
-            return <Link key={href} href={href} className={`flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition lg:w-full ${active ? 'bg-blue-50 text-blue-800' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}><Icon size={17} aria-hidden="true" />{label}</Link>
-          })}
-          {isAdmin && <Link href="/app/admin" className={`flex shrink-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition lg:w-full ${pathname.startsWith('/app/admin') ? 'bg-blue-50 text-blue-800' : 'text-gray-600 hover:bg-gray-100'}`}><Shield size={17} aria-hidden="true" />Administração</Link>}
+    <div className="app-shell lg:grid lg:grid-cols-[264px_minmax(0,1fr)]">
+      <aside className="app-sidebar">
+        <div className="app-sidebar__brand"><Brand href="/app" inverse /></div>
+        <p className="app-sidebar__caption">Seu espaço</p>
+        <nav className="app-sidebar__nav" aria-label="Navegação da plataforma">
+          {links.map(({ href, label, icon }) => renderLink(href, label, icon))}
+          {isAdmin && renderLink('/app/admin', 'Administração', Shield)}
         </nav>
-        <button onClick={signOut} className="mt-5 hidden w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium text-gray-600 hover:bg-gray-100 lg:flex"><LogOut size={17} aria-hidden="true" />Sair</button>
+        <div className="app-sidebar__footer">
+          <div className="app-user">
+            <span className="app-user__avatar">{initials(displayName)}</span>
+            <span className="app-user__name">{displayName}</span>
+          </div>
+          <button className="app-signout" onClick={signOut}>
+            <LogOut size={17} aria-hidden="true" />
+            <span>Sair</span>
+          </button>
+        </div>
       </aside>
+
       <div className="min-w-0">
-        <header className="hidden h-16 items-center justify-end border-b border-gray-200 bg-white px-8 lg:flex"><span className="text-sm text-gray-600">Olá, <strong className="font-semibold text-gray-900">{name || 'bem-vindo'}</strong></span></header>
-        <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-7 sm:py-8">{children}</main>
+        <header className="app-mobile-header">
+          <Brand href="/app" size="small" />
+          <button className="app-mobile-signout" onClick={signOut} aria-label="Sair da conta" title="Sair da conta">
+            <LogOut size={18} aria-hidden="true" />
+          </button>
+        </header>
+        <nav className="app-mobile-nav" aria-label="Navegação da plataforma">
+          {links.map(({ href, label, icon }) => renderLink(href, label, icon))}
+          {isAdmin && renderLink('/app/admin', 'Administração', Shield)}
+        </nav>
+        <header className="app-topbar">
+          <div>
+            <span className="app-topbar__caption">Seu espaço de trabalho</span>
+            <p>Olá, {displayName}</p>
+          </div>
+          <span className="app-topbar__avatar" aria-hidden="true">{initials(displayName)}</span>
+        </header>
+        <main className="app-main">{children}</main>
       </div>
     </div>
   )
