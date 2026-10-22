@@ -1,138 +1,102 @@
 import Link from 'next/link'
-import { ArrowRight, Check, FileText, MessageCircle, ShieldCheck } from 'lucide-react'
+import { ArrowDown, ArrowRight, Check, FileText, Layers3, Users } from 'lucide-react'
 import { Brand } from '@/components/Brand'
+import { QuoteApprovalDemo } from '@/components/landing/QuoteApprovalDemo'
+import { WorkflowStory } from '@/components/landing/WorkflowStory'
 
-const steps = [
+const capabilities = [
   {
-    title: 'Monte a proposta',
-    description: 'Inclua serviços, materiais, prazo e condições em um orçamento com a sua identidade.',
+    title: 'A sua marca em cada proposta',
+    description: 'Dados do negócio, logotipo e condições reunidos em um documento profissional.',
     icon: FileText,
   },
   {
-    title: 'Envie para o cliente',
-    description: 'Compartilhe um link claro pelo WhatsApp. O cliente abre no celular, sem instalar nada.',
-    icon: MessageCircle,
+    title: 'Clientes organizados',
+    description: 'Guarde os dados de contato e encontre tudo quando chegar um novo serviço.',
+    icon: Users,
   },
   {
-    title: 'Acompanhe a resposta',
-    description: 'Saiba quando o orçamento foi visualizado e registre a aprovação no mesmo lugar.',
-    icon: ShieldCheck,
+    title: 'Serviços prontos para reutilizar',
+    description: 'Mantenha um catálogo de itens para montar os próximos orçamentos com agilidade.',
+    icon: Layers3,
   },
-]
-
-const features = [
-  'Sua marca, seus dados e suas condições em cada proposta',
-  'Clientes e serviços organizados para reaproveitar',
-  'Histórico de orçamentos e respostas em um só lugar',
 ]
 
 export default function LandingPage() {
   return (
-    <main className="landing-shell">
-      <header className="landing-header">
-        <div className="landing-header__inner">
+    <main className="site-home">
+      <header className="site-header">
+        <div className="site-header__inner">
           <Brand href="/" />
-          <nav className="landing-nav" aria-label="Navegação principal">
+          <nav className="site-nav" aria-label="Navegação principal">
             <a href="#como-funciona">Como funciona</a>
             <a href="#recursos">Recursos</a>
+            <a href="#video">Vídeo</a>
           </nav>
-          <div className="landing-header__actions">
-            <Link href="/login" className="landing-login">Entrar</Link>
-            <Link href="/register" className="landing-button landing-button--small">Criar conta</Link>
+          <div className="site-header__actions">
+            <Link href="/login" className="site-login">Entrar</Link>
+            <Link href="/register" className="site-button site-button--small">Criar conta</Link>
           </div>
         </div>
       </header>
 
-      <section className="landing-hero" aria-labelledby="landing-title">
-        <div className="landing-hero__copy">
-          <p className="landing-kicker"><span aria-hidden="true" /> OrçaPro para quem vive do próprio trabalho</p>
-          <h1 id="landing-title">Seu trabalho merece um orçamento à altura.</h1>
-          <p className="landing-hero__description">
-            Crie propostas profissionais, envie pelo WhatsApp e acompanhe a resposta do cliente sem perder tempo com planilhas.
-          </p>
-          <div className="landing-hero__actions">
-            <Link href="/register" className="landing-button">
-              Começar agora <ArrowRight size={18} aria-hidden="true" />
-            </Link>
-            <a href="#como-funciona" className="landing-secondary-link">Conhecer a plataforma</a>
+      <section className="site-hero" aria-labelledby="site-title">
+        <div className="site-hero__copy">
+          <p className="landing-label"><span className="landing-label__dot" /> Orçamentos profissionais, sem planilhas</p>
+          <h1 id="site-title">Apresente seu trabalho com clareza.</h1>
+          <p className="site-hero__description">Crie uma proposta com a sua marca, envie pelo WhatsApp e acompanhe a resposta do cliente em um só lugar.</p>
+          <div className="site-hero__actions">
+            <Link href="/register" className="site-button">Criar meu primeiro orçamento <ArrowRight size={17} aria-hidden="true" /></Link>
+            <a href="#como-funciona" className="site-text-link">Conhecer o fluxo <ArrowDown size={15} aria-hidden="true" /></a>
           </div>
-          <ul className="landing-benefits" aria-label="O que você organiza no OrçaPro">
-            <li><Check size={16} aria-hidden="true" /> Orçamentos com a sua marca</li>
-            <li><Check size={16} aria-hidden="true" /> Respostas registradas</li>
-            <li><Check size={16} aria-hidden="true" /> Clientes sempre à mão</li>
-          </ul>
+          <div className="site-hero__note"><Check size={15} aria-hidden="true" /><span>Comece com o plano grátis e organize sua próxima proposta.</span></div>
         </div>
+        <QuoteApprovalDemo />
+        <div className="site-hero__edge" aria-hidden="true"><span>01</span><i /></div>
+      </section>
 
-        <div className="landing-video-column">
-          <div className="landing-video-heading">
-            <span className="landing-video-heading__icon"><FileText size={17} aria-hidden="true" /></span>
-            <div>
-              <p>Veja o OrçaPro em ação</p>
-              <span>Uma apresentação rápida, do orçamento à resposta.</span>
-            </div>
-          </div>
-          <div className="landing-video-frame">
-            <video
-              controls
-              playsInline
-              preload="metadata"
-              poster="/videos/orcapro-poster.webp"
-              aria-label="Vídeo promocional do OrçaPro"
-            >
-              <source src="/videos/orcapro-promocional.mp4" type="video/mp4" />
-              Seu navegador não consegue reproduzir este vídeo.
-            </video>
-          </div>
-          <p className="landing-video-caption">Assista quando quiser. O vídeo não inicia sozinho.</p>
+      <WorkflowStory />
+
+      <section className="site-video" id="video" aria-labelledby="video-title">
+        <div className="site-video__copy">
+          <p className="landing-label">Conheça a plataforma</p>
+          <h2 id="video-title">Veja o OrçaPro em ação.</h2>
+          <p>Uma apresentação rápida de como organizar serviços, enviar uma proposta e acompanhar a decisão do cliente.</p>
+          <a className="site-text-link" href="#recursos">Ver o que está incluído <ArrowRight size={15} aria-hidden="true" /></a>
+        </div>
+        <div className="site-video__frame">
+          <video controls playsInline preload="metadata" poster="/videos/orcapro-poster.webp" aria-label="Vídeo promocional do OrçaPro">
+            <source src="/videos/orcapro-promocional.mp4" type="video/mp4" />
+            Seu navegador não consegue reproduzir este vídeo.
+          </video>
+          <span className="site-video__play-label"><span /> Vídeo de apresentação</span>
         </div>
       </section>
 
-      <section className="landing-process" id="como-funciona" aria-labelledby="process-title">
-        <div className="landing-section-heading">
-          <p className="landing-kicker">Um fluxo simples</p>
-          <h2 id="process-title">Do primeiro item à decisão do cliente.</h2>
-          <p>O OrçaPro deixa cada etapa mais clara para você e para quem vai contratar o serviço.</p>
+      <section className="site-capabilities" id="recursos" aria-labelledby="capabilities-title">
+        <div className="site-capabilities__heading">
+          <p className="landing-label">Feito para quem presta serviços</p>
+          <h2 id="capabilities-title">Menos tempo montando proposta. Mais tempo no serviço.</h2>
         </div>
-        <ol className="landing-steps">
-          {steps.map(({ title, description, icon: Icon }, index) => (
-            <li className="landing-step" key={title}>
-              <div className="landing-step__top">
-                <span className="landing-step__number">0{index + 1}</span>
-                <Icon size={20} aria-hidden="true" />
-              </div>
-              <h3>{title}</h3>
-              <p>{description}</p>
-            </li>
+        <div className="site-capabilities__list">
+          {capabilities.map(({ title, description, icon: Icon }, index) => (
+            <article className="site-capability" key={title}>
+              <span className="site-capability__icon"><Icon size={19} aria-hidden="true" /></span>
+              <div><h3>{title}</h3><p>{description}</p></div>
+              <span className="site-capability__number">0{index + 1}</span>
+            </article>
           ))}
-        </ol>
-      </section>
-
-      <section className="landing-tools" id="recursos" aria-labelledby="tools-title">
-        <div className="landing-tools__intro">
-          <p className="landing-kicker">Feito para a rotina de serviço</p>
-          <h2 id="tools-title">Menos retrabalho para você. Mais clareza para o cliente.</h2>
         </div>
-        <ul className="landing-tools__list">
-          {features.map((feature) => (
-            <li key={feature}>
-              <span><Check size={16} aria-hidden="true" /></span>
-              {feature}
-            </li>
-          ))}
-        </ul>
       </section>
 
-      <section className="landing-close" aria-labelledby="close-title">
-        <div>
-          <p className="landing-kicker">Pronto para organizar seus próximos serviços?</p>
-          <h2 id="close-title">Comece com o próximo orçamento.</h2>
-        </div>
-        <Link href="/register" className="landing-button landing-button--light">
-          Criar minha conta <ArrowRight size={18} aria-hidden="true" />
-        </Link>
+      <section className="site-close" aria-labelledby="close-title">
+        <div className="site-close__mark" aria-hidden="true"><FileText size={24} /></div>
+        <p className="landing-label">O próximo orçamento pode começar agora</p>
+        <h2 id="close-title">Deixe a sua proposta falar pelo seu trabalho.</h2>
+        <Link href="/register" className="site-button site-button--light">Começar grátis <ArrowRight size={17} aria-hidden="true" /></Link>
       </section>
 
-      <footer className="landing-footer">
+      <footer className="site-footer">
         <Brand href="/" size="small" />
         <span>Orçamentos claros para quem faz acontecer.</span>
         <Link href="/login">Entrar na plataforma</Link>

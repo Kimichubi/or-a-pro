@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { BadgeCheck, CircleDollarSign, Clock3, FileText, ArrowRight } from 'lucide-react'
+import { BadgeCheck, CircleDollarSign, Clock3, FileText, ArrowRight, Send } from 'lucide-react'
 import { api, money, date } from '@/lib/client-api'
 import { Loading, Notice, Page, Panel } from './Page'
 
@@ -33,24 +33,21 @@ const statusClasses: Record<string, string> = {
   expired: 'status-pill status-pill--neutral',
 }
 
-function Metric({ label, value, detail, icon: Icon, tone }: {
+function Metric({ label, value, detail, icon: Icon }: {
   label: string
   value: string | number
   detail?: string
   icon: typeof FileText
-  tone: 'petrol' | 'green' | 'amber' | 'ink'
 }) {
   return (
-    <Panel className="metric-card">
-      <div className="metric-card__top">
-        <span className="metric-card__label">{label}</span>
-        <span className={['metric-card__icon', 'metric-card__icon--' + tone].join(' ')}>
-          <Icon size={19} aria-hidden="true" />
-        </span>
+    <article className="dashboard-stat">
+      <div className="dashboard-stat__top">
+        <span className="dashboard-stat__icon"><Icon size={17} aria-hidden="true" /></span>
+        <span className="dashboard-stat__label">{label}</span>
       </div>
-      <p className="metric-card__value">{value}</p>
-      {detail && <p className="metric-card__detail">{detail}</p>}
-    </Panel>
+      <p className="dashboard-stat__value">{value}</p>
+      {detail && <p className="dashboard-stat__detail">{detail}</p>}
+    </article>
   )
 }
 
@@ -73,11 +70,17 @@ export function Dashboard() {
       {error && <Notice>{error}</Notice>}
       {!data && !error ? <Loading /> : data && (
         <>
-          <section className="dashboard-metrics" aria-label="Resumo dos orçamentos">
-            <Metric label="Orçamentos enviados" value={data.quotesSent} detail={'Taxa de aprovação: ' + data.approvalRate + '%'} icon={FileText} tone="petrol" />
-            <Metric label="Aprovados" value={data.quotesApproved} detail="Serviços confirmados" icon={BadgeCheck} tone="green" />
-            <Metric label="Aguardando resposta" value={data.awaitingResponse} detail="Orçamentos em aberto" icon={Clock3} tone="amber" />
-            <Metric label="Valor aprovado" value={money(data.totalApproved)} detail="Soma dos orçamentos aprovados" icon={CircleDollarSign} tone="ink" />
+          <section className="dashboard-overview" aria-label="Resumo dos orçamentos">
+            <Panel className="dashboard-revenue">
+              <div className="dashboard-revenue__top"><span className="dashboard-revenue__icon"><CircleDollarSign size={19} aria-hidden="true" /></span><span>Valor aprovado</span></div>
+              <p className="dashboard-revenue__value">{money(data.totalApproved)}</p>
+              <div className="dashboard-revenue__bottom"><span><BadgeCheck size={15} aria-hidden="true" /> {data.quotesApproved} serviços confirmados</span><span>Taxa de aprovação {data.approvalRate}%</span></div>
+            </Panel>
+            <div className="dashboard-stats">
+              <Metric label="Enviados" value={data.quotesSent} detail="Orçamentos enviados" icon={Send} />
+              <Metric label="Aprovados" value={data.quotesApproved} detail="Serviços confirmados" icon={BadgeCheck} />
+              <Metric label="Aguardando" value={data.awaitingResponse} detail="Resposta do cliente" icon={Clock3} />
+            </div>
           </section>
 
           <Panel className="dashboard-activity !p-0">
