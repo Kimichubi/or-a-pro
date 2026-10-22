@@ -16,7 +16,18 @@ export function Business() {
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); if (!data) return
     setBusy(true); setError(''); setSuccess('')
-    try { const updated = await api<BusinessData>('/api/business', { method: 'PUT', body: JSON.stringify(data) }); setData(updated); setSuccess('Dados do negócio salvos.') }
+    const payload = {
+      name: data.name,
+      document: data.document,
+      phone: data.phone,
+      whatsapp: data.whatsapp,
+      email: data.email,
+      address: data.address,
+      primaryColor: data.primaryColor,
+      secondaryColor: data.secondaryColor,
+      termsConditions: data.termsConditions,
+    }
+    try { const updated = await api<BusinessData>('/api/business', { method: 'PUT', body: JSON.stringify(payload) }); setData(updated); setSuccess('Dados do negócio salvos.') }
     catch (err) { setError(err instanceof Error ? err.message : 'Não foi possível salvar.') } finally { setBusy(false) }
   }
   async function upload(file: File | undefined) {
